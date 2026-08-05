@@ -1,0 +1,17 @@
+# LiteLLM 模型清单
+# 开发期默认 deepseek-v4-flash（便宜够用）；deepseek-v4-pro 供重活/复核用
+model_list:
+  - model_name: deepseek-v4-flash
+    litellm_params:
+      model: openai/deepseek-v4-flash
+      api_base: https://api.deepseek.com/v1
+      api_key: os.environ/DEEPSEEK_API_KEY
+      temperature: 0.1
+      top_p: 0.9
+  - model_name: deepseek-v4-pro
+    litellm_params:
+      model: openai/deepseek-v4-pro
+      api_base: https://api.deepseek.com/v1
+      api_key: os.environ/DEEPSEEK_API_KEY
+      temperature: 0.1
+      top_p: 0.9
