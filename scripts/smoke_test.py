@@ -24,17 +24,21 @@ SESSION_ID = "smoke_session_1"
 
 
 def main():
+    # 注意：deepseek-v4-flash 是推理模型，默认会输出 reasoning_content，
+    # ADK 2.6 会误把思考内容当回复。必须禁用它：extra_body={"thinking": {"type": "disabled"}}
     model = LiteLlm(
         model="openai/deepseek-v4-flash",
         api_key=os.getenv("DEEPSEEK_API_KEY"),
         api_base=os.getenv("DEEPSEEK_BASE_URL", "https://api.deepseek.com/v1"),
         temperature=0.1,
         top_p=0.9,
+        seed=42,
+        extra_body={"thinking": {"type": "disabled"}},
     )
     agent = Agent(
         name="job_assistant",
         model=model,
-        instruction="你是一个财经求职助手。保持回答简洁。",
+        instruction="你是一个财经求职助手。必须用中文回答。直接回答问题本身，不要复述指令，不要输出思考过程。",
     )
 
     session_service = InMemorySessionService()

@@ -22,11 +22,13 @@ def complete(model: str = DEFAULT_MODEL, messages: list[dict] | None = None, **k
     if messages is None:
         messages = [{"role": "user", "content": "你好，回复一句话即可。"}]
     gen = {**DEFAULT_GEN, **kwargs}
+    # 禁用 thinking：deepseek 是推理模型，不开则多出 reasoning_content，与 ADK 配合易误读
     resp = litellm.completion(
         model=model,
         messages=messages,
         api_key=os.getenv("DEEPSEEK_API_KEY"),
         api_base=os.getenv("DEEPSEEK_BASE_URL", "https://api.deepseek.com/v1"),
+        extra_body={"thinking": {"type": "disabled"}},
         **gen,
     )
     return resp.choices[0].message.content
