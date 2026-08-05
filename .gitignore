@@ -1,0 +1,16 @@
+# 隐私与密钥
+.env
+data/profile.yaml
+data/history.db
+data/knowledge/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# 工具
+.idea/
+.vscode/
+*.log
