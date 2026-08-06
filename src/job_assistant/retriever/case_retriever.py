@@ -116,6 +116,16 @@ class CaseRetriever:
             cases=[self._hit(r, doc, meta) for r, doc, meta in self._query(self._cases, q_vec, k, min_sim)],
         )
 
+    def search_cases(
+        self, query_text: str, k: int = DEFAULT_K, min_sim: float = DEFAULT_MIN_SIM
+    ) -> list[RetrievedDoc]:
+        """按任意文本直接检索高分案例（RAG 评测、后续联网搜索入口用）。"""
+        q_vec = self.embedder.embed_query(query_text)
+        return [
+            self._hit(sim, doc, meta)
+            for sim, doc, meta in self._query(self._cases, q_vec, k, min_sim)
+        ]
+
     def _query(self, coll, q_vec, k: int, min_sim: float):
         res = coll.query(query_embeddings=[q_vec], n_results=max(k * 4, 5))
         hits = []
