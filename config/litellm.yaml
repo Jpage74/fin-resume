@@ -1,17 +1,17 @@
 # LiteLLM 模型清单
 # 开发期默认 deepseek-v4-flash（便宜够用）；deepseek-v4-pro 供重活/复核用
+# 统一用 litellm 原生 deepseek/ 前缀：读 DEEPSEEK_API_KEY env，async 路径稳定
+# （openai/ + 自定义 api_base 在 async 会丢 api_key，见 src/job_assistant/llm.py 注释）
 model_list:
   - model_name: deepseek-v4-flash
     litellm_params:
-      model: openai/deepseek-v4-flash
-      api_base: https://api.deepseek.com/v1
+      model: deepseek/deepseek-v4-flash
       api_key: os.environ/DEEPSEEK_API_KEY
       temperature: 0.1
       top_p: 0.9
   - model_name: deepseek-v4-pro
     litellm_params:
-      model: openai/deepseek-v4-pro
-      api_base: https://api.deepseek.com/v1
+      model: deepseek/deepseek-v4-pro
       api_key: os.environ/DEEPSEEK_API_KEY
       temperature: 0.1
       top_p: 0.9

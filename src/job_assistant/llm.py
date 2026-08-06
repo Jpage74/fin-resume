@@ -14,8 +14,11 @@ load_dotenv()  # 读取 .env
 # 统一生成参数：低温 + 低 top_p + 固定 seed，输出稳定可复现
 DEFAULT_GEN = {"temperature": 0.1, "top_p": 0.9, "seed": 42}
 
-# 默认模型（OpenAI 兼容前缀 + DeepSeek base）
-DEFAULT_MODEL = "openai/deepseek-v4-flash"
+# 默认模型：litellm 原生 deepseek/ 前缀。
+# 为什么不用 openai/ + api_base：openai/ 前缀在 ADK 的 async 路径会丢 api_key
+# （litellm 对自定义 base 不读 env 兜底），导致 Missing credentials；
+# deepseek/ 原生 provider 读 DEEPSEEK_API_KEY env，sync/async 都稳定。
+DEFAULT_MODEL = "deepseek/deepseek-v4-flash"
 
 
 def complete(model: str = DEFAULT_MODEL, messages: list[dict] | None = None, **kwargs) -> str:
@@ -28,7 +31,6 @@ def complete(model: str = DEFAULT_MODEL, messages: list[dict] | None = None, **k
         model=model,
         messages=messages,
         api_key=os.getenv("DEEPSEEK_API_KEY"),
-        api_base=os.getenv("DEEPSEEK_BASE_URL", "https://api.deepseek.com/v1"),
         extra_body={"thinking": {"type": "disabled"}},
         **gen,
     )
@@ -50,7 +52,6 @@ def complete_json(model: str = DEFAULT_MODEL, messages: list[dict] | None = None
             model=model,
             messages=messages,
             api_key=os.getenv("DEEPSEEK_API_KEY"),
-            api_base=os.getenv("DEEPSEEK_BASE_URL", "https://api.deepseek.com/v1"),
             response_format={"type": "json_object"},
             extra_body={"thinking": {"type": "disabled"}},
             **gen,
@@ -61,7 +62,6 @@ def complete_json(model: str = DEFAULT_MODEL, messages: list[dict] | None = None
             model=model,
             messages=messages,
             api_key=os.getenv("DEEPSEEK_API_KEY"),
-            api_base=os.getenv("DEEPSEEK_BASE_URL", "https://api.deepseek.com/v1"),
             extra_body={"thinking": {"type": "disabled"}},
             **gen,
         )
