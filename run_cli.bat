@@ -1,6 +1,6 @@
 @echo off
-rem 求职助手 CLI 启动脚本（Windows）
-rem 用法: run_cli.bat --file jd.txt     或   run_cli.bat "JD文本"
+rem Job Assistant CLI launcher (Windows)
+rem Usage: run_cli.bat --file jd.txt   or   run_cli.bat "JD text"
 cd /d %~dp0
 set PYTHONPATH=src
 .venv\Scripts\python.exe -m job_assistant.cli %*
