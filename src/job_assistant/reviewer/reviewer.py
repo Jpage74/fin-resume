@@ -51,17 +51,20 @@ REVIEW_PROMPT = """你是一名严格的招聘流程质检员，负责复核求�
   "corrections": ["具体修正建议"]
 }
 
-复核规则（逐条执行）：
+复核规则（逐条执行，只报「真正违反」的情况）：
 1. 对每条 gap：若 evidence 为空且 needs_proof 不为 true → error（无证据却下结论，幻觉）。
-2. verdict 一致性：硬门槛校验有 fail 项，verdict 不能是『建议投递』，否则 error。
-   硬门槛校验有 unknown 项且数量多，verdict 不应过于肯定。
-3. sources 里引用的每一条都必须能在给定检索结果中找到对应 source，否则 error（编造来源）。
-4. strengths / top_suggestions 若引用了画像或案例中不存在的内容 → error。
-5. 其余小问题标 warning / info。
+   evidence 为空但 needs_proof=true 是合规的，不要报。
+2. verdict 一致性：硬门槛有 fail 项，但 verdict 是『建议投递』→ error。
+   verdict 是『谨慎投递』或『不建议投递』则合规，不要报。
+3. sources：先在给定检索结果 source 列表里核对，能找到 → 合规，不要报；找不到 → error（编造来源）。
+4. strengths / top_suggestions：若引用了画像或案例中不存在的内容 → error；都找得到 → 合规，不要报。
 
-- 只有 error 级问题才把 approved 置为 false。
-- 不要无中生有地挑刺；拿不准的给 info。
-- 只输出 JSON，不要多余文字。"""
+严重度含义：
+- error = 违反规则，必须修正，foundings 里要有且 approved=false；
+- warning = 可疑但不违反硬规则；
+- info = 备注。
+通过检查的项目不要写进 findings。不要为了凑数把合规项标 error。
+拿不准的给 info，绝不夸大。只输出 JSON，不要多余文字。"""
 
 
 def review(
