@@ -21,6 +21,7 @@ DEFAULT_PROFILE = {
         "constraints": [],
         "skills": [],
         "certs": [],
+        "internships": [],   # 实习经历（evidence_key: internships>=N 用它计数）
         "projects": [],
     }
 }
