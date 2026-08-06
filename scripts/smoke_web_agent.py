@@ -22,7 +22,7 @@ from google.adk.sessions import InMemorySessionService  # noqa: E402
 from google.adk.agents import Agent  # noqa: E402
 from google.genai import types  # noqa: E402
 
-from job_assistant_app.agent import root_agent  # noqa: E402
+from fin_resume.agent import root_agent  # noqa: E402
 
 load_dotenv()
 

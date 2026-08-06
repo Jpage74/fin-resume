@@ -21,7 +21,7 @@ from google.adk.agents import Agent  # noqa: E402
 from google.adk.models.lite_llm import LiteLlm  # noqa: E402
 from google.genai import types  # noqa: E402
 
-from job_assistant_app.tools import analyze_jd, set_resume  # noqa: E402
+from fin_resume.tools import analyze_jd, set_resume  # noqa: E402
 
 load_dotenv()
 
@@ -145,7 +145,7 @@ def build_agent() -> Agent:
         extra_body={"thinking": {"type": "disabled"}},
     )
     return Agent(
-        name="job_assistant",
+        name="fin_resume",
         model=model,
         instruction=INSTRUCTION,
         description="财经院校学生求职助手：传简历+传JD，返回硬门槛校验/案例匹配/差距分析/简历建议",

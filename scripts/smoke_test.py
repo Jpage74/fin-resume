@@ -26,7 +26,7 @@ from google.genai import types  # noqa: E402
 
 load_dotenv()
 
-APP_NAME = "job_assistant_app"
+APP_NAME = "fin_resume"
 SESSION_ID = "smoke_session_1"
 
 
@@ -42,7 +42,7 @@ def build_agent():
         extra_body={"thinking": {"type": "disabled"}},
     )
     return Agent(
-        name="job_assistant",
+        name="fin_resume",
         model=model,
         instruction="你是一个财经求职助手。必须用中文回答。直接回答问题本身，不要复述指令，不要输出思考过程。",
     )
