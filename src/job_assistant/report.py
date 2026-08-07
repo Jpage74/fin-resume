@@ -20,7 +20,7 @@ def format_report(r: PipelineResult) -> str:
     for g in r.gates:
         L.append(f"- {_GATE_MARK[g.status]} **{g.requirement.description}** — {g.reason}")
 
-    L.append("\n### ② 匹配岗位 & 高分案例")
+    L.append("\n### ② 匹配岗位 & 上岸背景画像")
     if r.retrieval.jds:
         for jd in r.retrieval.jds:
             L.append(f"- [岗位] {jd.role_name} @ {jd.company}  相似度 {jd.score}  `source={jd.source}`")

@@ -2,7 +2,7 @@
 
 设计文档「MVP 核心闭环」：
     输入 JD → jd_analyzer 抽需求（硬门槛规则校验）
-            → case_retriever 检索匹配岗位 + 高分案例
+            → case_retriever 检索匹配岗位 + 上岸背景画像
             → resume_matcher 证据化差距分析（needs_proof）
             → reviewer 复核（防幻觉硬门）
 

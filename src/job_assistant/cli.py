@@ -39,7 +39,7 @@ def print_report(r: PipelineResult) -> None:
     for g in r.gates:
         print(f"  {_GATE_MARK[g.status]} {g.requirement.description} — {g.reason}")
 
-    print(f"\n[2] 匹配岗位 & 高分案例")
+    print(f"\n[2] 匹配岗位 & 上岸背景画像")
     if r.retrieval.jds:
         for jd in r.retrieval.jds:
             print(f"  [岗位] {jd.role_name} @ {jd.company}  相似度 {jd.score}  source={jd.source}")

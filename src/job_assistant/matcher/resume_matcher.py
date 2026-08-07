@@ -3,7 +3,7 @@
 管线第三环。输入三样东西：
 - JobRequirements（jd_analyzer 输出）
 - 用户画像（memory/profile）
-- 硬门槛校验结果 + 检索到的匹配岗位/高分案例（rules + case_retriever）
+- 硬门槛校验结果 + 检索到的匹配岗位/上岸背景画像（rules + case_retriever）
 
 输出 MatchReport：逐条差距分析（每条绑定证据 / 无证据标 needs_proof）、
 匹配度评分、判定、按优先级的简历修改建议。

@@ -1,4 +1,4 @@
-"""案例检索子 agent：JobRequirements → 匹配岗位 + 高分案例（带 source）。
+"""案例检索子 agent：JobRequirements → 匹配岗位 + 上岸背景画像（带 source）。
 
 RAG 实现：Chroma 向量库 + fastembed 中文 embedding（bge-small-zh）。
 防幻觉检索参数（设计文档六.2）：
@@ -46,7 +46,7 @@ class RetrievalResult:
 
 
 class CaseRetriever:
-    """封装 Chroma 两个集合：jds（岗位库）、cases（高分案例库）。"""
+    """封装 Chroma 两个集合：jds（岗位库）、cases（背景画像案例库）。"""
 
     def __init__(self, chroma_dir: Path = CHROMA_DIR, embedder: Embedder | None = None):
         import chromadb  # 延迟导入：缺失时给清晰报错而不是栈崩
@@ -119,7 +119,7 @@ class CaseRetriever:
     def search_cases(
         self, query_text: str, k: int = DEFAULT_K, min_sim: float = DEFAULT_MIN_SIM
     ) -> list[RetrievedDoc]:
-        """按任意文本直接检索高分案例（RAG 评测、后续联网搜索入口用）。"""
+        """按任意文本直接检索背景画像案例（RAG 评测、后续联网搜索入口用）。"""
         q_vec = self.embedder.embed_query(query_text)
         return [
             self._hit(sim, doc, meta)

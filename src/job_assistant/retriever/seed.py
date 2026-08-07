@@ -17,17 +17,23 @@ from job_assistant.retriever.case_retriever import CaseRetriever  # noqa: E402
 
 
 def case_document(d: dict) -> str:
-    """把结构化案例拍平成可检索文本（检索是纯文本语义匹配）。"""
+    """把结构化案例拍平成可检索文本（检索是纯文本语义匹配）。
+
+    素材形态是「背景画像」（bg 帖/公开面经），不是完整简历：
+    resume 下字段大多可缺省（bg 帖常没有 gpa / projects），缺省留空即可。
+    bg / result 保留原始自述与结果，检索时也纳入文本。
+    """
     r = d.get("resume", {})
     parts = [
-        f"[{d.get('role_category', '')}] {d.get('role_name', '')} 高分简历案例",
+        f"[{d.get('role_category', '')}] {d.get('role_name', '')} 背景画像案例",
         f"公司：{d.get('company', '')}",
+        f"背景自述：{d.get('bg', '')}",
+        f"结果：{d.get('result', '')}",
         f"学历：{r.get('school', '')} {r.get('degree', '')} {r.get('major', '')} 绩点{r.get('gpa', '')}",
         "技能：" + "、".join(r.get("skills") or []),
         "证书：" + "、".join(r.get("certs") or []),
         "实习：" + "；".join(r.get("internships") or []),
         "项目：" + "；".join(f"{p.get('name', '')}：{p.get('detail', '')}" for p in r.get("projects") or []),
-        "亮点：" + str(d.get("highlights", "")),
         "关键词：" + "、".join(d.get("keywords") or []),
     ]
     return "\n".join(p for p in parts if p and not p.endswith("："))
