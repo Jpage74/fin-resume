@@ -45,17 +45,18 @@ web 智能体 `fin_resume` 在每次**新建会话**时主动输出开场白（�
 - **LiteLLM**（统一模型网关，默认 DeepSeek `deepseek-v4-flash`，关闭 thinking）
 - **RAG**：Chroma 向量库 + fastembed（BAAI/bge-small-zh-v1.5）
 - **文件解析**：pypdf（PDF）、python-docx（Word）
-- **记忆**：用户画像 `data/profile.yaml` + 投递历史 SQLite（规划中）
+- **记忆**：用户画像 `data/profile.yaml` + 投递历史 SQLite + 短期记忆（STM 最近 20 分钟对话）+ 长期记忆（LTM 每日摘要 → `data/memory/` 三 MD）
 
 ## 目录结构
 
 ```
 src/job_assistant/      # 四环管线：jd_analyzer / case_retriever / resume_matcher / reviewer
+src/job_assistant/memory/  # 记忆层：profile / history / stm(短期) / ltm(长期摘要) / inject(注入)
 agents/fin_resume/      # ADK web 智能体（agent.py 主逻辑 + tools.py 工具 + welcome.py 开场白）
-scripts/                # 冒烟测试 / 评测脚本
+scripts/                # 冒烟测试 / 评测脚本 / run_memory_digest.py（每日摘要）
 run_web.py              # web 启动入口（含开场白注入）
 run_web.bat / run_cli.bat
-data/                   # 画像 / 向量库 / 知识库（本地存储，gitignore 排除）
+data/                   # 画像 / 向量库 / 知识库 / 记忆（本地存储，gitignore 排除）
 ```
 
 ## Roadmap
@@ -64,9 +65,9 @@ data/                   # 画像 / 向量库 / 知识库（本地存储，gitign
 - [x] web 可视化：ADK dev-ui 交互式智能体 + 文件上传 + 开场白
 - [x] 防幻觉：证据绑定 + needs_proof + reviewer 复核 + RAG 评测（recall@k）
 - [x] 种子数据：背景画像案例库（真实 bg 帖整理，当前券商行研/券商投行 3 案例 + 1 JD，持续扩充中）
-- [ ] 记忆层：用户画像 + 投递历史
+- [x] 记忆层：用户画像 + 投递历史 + STM 短期记忆（20 分钟对话）+ LTM 长期记忆（每日摘要三 MD，`scripts/run_memory_digest.py`）
 - [ ] 定时收集：GitHub Actions cron
 
 ## 隐私
 
-用户画像含真实个人信息，默认 `.gitignore` 排除（`.env`、`data/profile.yaml`、`data/knowledge/`、`data/chroma/`）、本地存储，不上传。
+用户画像、对话摘要含真实个人信息，默认 `.gitignore` 排除（`.env`、`data/profile.yaml`、`data/knowledge/`、`data/memory/`、`data/chroma/`）、本地存储，不上传。短期记忆从本地 `session.db`（ADK 会话日志）读取，同样不上传。

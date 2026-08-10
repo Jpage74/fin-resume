@@ -23,6 +23,7 @@ from google.genai import types  # noqa: E402
 
 from fin_resume.tools import analyze_jd, set_resume  # noqa: E402
 from fin_resume.welcome import WELCOME  # noqa: E402
+from job_assistant.memory.inject import inject_memory  # noqa: E402
 
 load_dotenv()
 
@@ -49,7 +50,15 @@ WELCOME 全文：
 - 必须用中文回答。
 - 报告里有 `source=` 的引用不能去掉；有"待证据/需证据"项要如实保留。
 - 不要编造报告里没有的内容。
-- 除第一条消息的开场白外，不需要再额外寒暄，直接按上述流程推进。"""
+- 除第一条消息的开场白外，不需要再额外寒暄，直接按上述流程推进。
+
+【系统记忆使用规则】
+- 若 system_instruction 中出现「[系统短期记忆]」：那是最近 20 分钟内与用户的对话摘要，
+  用它理解当前语境（比如用户刚才在讨论哪个岗位、想对比什么），不要逐字复述给用户。
+- 若出现「[系统长期记忆]」：包含用户画像、助手设定、长期经历（来源 data/memory 三类 MD）。
+  用它做个性化回答——记住用户的目标岗位、已知短板、偏好城市、既往投递，避免重复问已知信息。
+- 记忆是辅助：只在「有助于回答当前问题」时用，不要为了展示记忆而提它；记不住/没有记忆就正常按当前消息处理。
+- 若记忆与用户本次消息冲突，以用户本次消息为准（记忆可能过时）。"""
 
 
 def _extract_file_bytes(part: types.Part) -> tuple[bytes, str] | None:
@@ -159,7 +168,8 @@ def build_agent() -> Agent:
         instruction=INSTRUCTION,
         description="财经院校学生求职助手：传简历+传JD，返回硬门槛校验/案例匹配/差距分析/简历建议",
         tools=[set_resume, analyze_jd],
-        before_model_callback=_decode_uploaded_files,
+        # 两个 before_model_callback：先解码上传文件，再注入记忆（每次调 LLM 前执行）
+        before_model_callback=[_decode_uploaded_files, inject_memory],
     )
 
 
