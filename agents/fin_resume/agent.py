@@ -166,7 +166,7 @@ def build_agent() -> Agent:
         name="fin_resume",
         model=model,
         instruction=INSTRUCTION,
-        description="财经院校学生求职助手：传简历+传JD，返回硬门槛校验/案例匹配/差距分析/简历建议",
+        description="财经院校学生求职私人助手：传简历+传JD，返回硬门槛校验/案例匹配/差距分析/简历建议，跨会话记忆用户画像与投递进展",
         tools=[set_resume, analyze_jd],
         # 两个 before_model_callback：先解码上传文件，再注入记忆（每次调 LLM 前执行）
         before_model_callback=[_decode_uploaded_files, inject_memory],
