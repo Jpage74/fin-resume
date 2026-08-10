@@ -29,6 +29,9 @@ def format_report(r: PipelineResult) -> str:
             L.append(f"- [案例] {c.role_name} @ {c.company}  相似度 {c.score}  `source={c.source}`")
     if r.retrieval.empty:
         L.append("- （低于相似度阈值，无匹配结果 —— 宁缺毋滥，不硬凑）")
+    elif not r.retrieval.cases:
+        # 岗位匹配到了、但没有上岸者 bg 案例：如实标注，不编造，引导补案例库
+        L.append("- ⚠ bg 知识库正在完善中，暂无上岸者背景画像：案例库未收录该类岗位")
 
     L.append(f"\n### ③ 证据化差距分析 | 匹配度 **{report.match_score}/100** → {report.verdict}")
     for i, g in enumerate(report.gaps, 1):

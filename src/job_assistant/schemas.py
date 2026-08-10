@@ -32,7 +32,7 @@ class Requirement(BaseModel):
 class JobRequirements(BaseModel):
     """JD 解析后的标准化岗位需求（管线流转契约）。"""
 
-    role_category: str = Field(description="岗位归类：券商行研 / 券商投行 / 银行管培 / 四大审计 / 基金投研 / 保险精算 / 咨询顾问 / 互联网财务 / 国企财务 / 考公事业单位")
+    role_category: str = Field(description="岗位归类：券商行研 / 券商投行 / 银行管培 / 四大审计 / 基金投研 / 基金销售 / 基金运营 / 信托 / 保险资管 / 保险精算 / PE股权投资 / 咨询顾问 / 互联网财务 / 国企财务 / 考公事业单位")
     role_name: str = Field(description="岗位名称")
     company: str | None = None
     location: str | None = None
