@@ -48,7 +48,7 @@ class MatchReport(BaseModel):
     sources: list[str] = Field(default_factory=list, description="引用过的案例 source")
 
 
-MATCH_PROMPT = """你是一名资深财经招聘顾问。根据岗位需求、候选人画像、硬门槛校验结果、检索到的高分案例，做证据化的差距分析。只输出一个 JSON 对象：
+MATCH_PROMPT = """你是一名深耕财经求职领域多年的专业顾问，对券商投行、行研、PE/VC、基金资管、银行、四大审计等各细分赛道的工作内容、技能栈、行业术语和简历惯例有深入理解。根据岗位需求、候选人画像、硬门槛校验结果、检索到的高分案例，做证据化的差距分析。只输出一个 JSON 对象：
 
 {
   "match_score": 0到100整数，综合匹配度,
@@ -64,7 +64,7 @@ MATCH_PROMPT = """你是一名资深财经招聘顾问。根据岗位需求、�
     }
   ],
   "strengths": ["画像相对该岗位的亮点，逐条"],
-  "top_suggestions": ["按优先级排序的简历修改建议，3到5条"],
+  "top_suggestions": ["按优先级排序的简历修改建议，3到5条，每条2到4句话"],
   "sources": ["分析中实际引用过的案例 source，按如下格式：role_name @company (source=xxx)"]
 }
 
@@ -74,6 +74,25 @@ MATCH_PROMPT = """你是一名资深财经招聘顾问。根据岗位需求、�
 - 硬门槛校验里 fail 的项必须反映在 gaps 和 verdict 里；unknown 的项 needs_proof=true。
 - 只基于给定的输入分析，不要脑补画像里没有的信息。
 - 不要凭空编造案例内容，引用案例必须用其 source。
+- 分析差距（gaps）时只对标 JD 的「任职要求」段；「岗位职责」段里提到的行业/方向
+  （如半导体、量子计算）描述的是入职后的学习范围，不是候选人当前必须掌握的领域，
+  不要据此判定"不匹配"。
+- top_suggestions 必须体现财经行业专业性，不能浮于表面（这是核心要求，务必遵守）：
+  * 结合岗位所属赛道（role_category）的行业知识与岗位职责，用专业术语给出具体建议。
+    例如：投行岗 → 结合 IPO/并购重组/尽职调查/财务建模（DCF、可比公司估值）/募集说明书/底稿等；
+    行研岗 → 结合深度报告/盈利预测/估值模型/晨会/路演/数据底稿（Wind、Bloomberg）等；
+    PE/VC/资管 → 结合尽调/估值建模/LBO/投后管理/退出机制/一二级市场联动等；
+    银行/四大 → 结合信贷尽调/审计底稿/内控测试/科目分析等。
+  * 参考检索到的高分案例原文的简历写法（成功上岸者的背景/实习描述/项目成果是最好的范本），
+    吸收其中的措辞、结构、量化方式，但**不要写"参考了XX案例"**这类话，直接给具体建议即可。
+  * 每条建议写清：改简历哪个字段/段落 → 用什么专业措辞或行业标准写法 → 对标岗位哪个具体要求的哪一点、为什么这样改。
+  * 每条 3~5 句，不要只写一句方向性的话，一定要落到可操作的层面（给出建议的具体措辞或数据表述）。
+  * 主动利用 JD「岗位职责」里的行业/赛道信息：若职责提到半导体/电子/量子计算/新能源等方向，
+    建议候选人提前阅读该行业的深度报告、学习产业链知识、了解主要公司和竞争格局，
+    甚至建议在简历里加一个"行业研究/追踪"栏目体现主动性——职责里的行业方向就是最好的提前准备指南。
+- gaps 里每条 gap 的 suggestion 同样要结合行业术语，与 top_suggestions 的专业水准保持一致。
+- 遇到时间出勤、软性素质这类已归并的条目，gaps 里也只出一项，不要内部再拆开。
+  整体判断是否吻合（如"出勤要求总体吻合/不吻合"），suggestion 一并给出，不逐项列。
 - 只输出 JSON，不要多余文字。"""
 
 
@@ -92,10 +111,14 @@ def match(
         f"- [{g.status.value}] {g.requirement.description}（evidence_key={g.requirement.evidence_key}）{g.reason}"
         for g in gates
     ]
-    case_lines = [
-        f"- [{c.role_category}] {c.role_name} @{c.company} 相似度{c.score} source={c.source}"
-        for c in retrieval.cases
-    ]
+    # 把案例原文一并传给 LLM，让它能基于具体 bg/学历/技能/结果做差距分析，
+    # 而不是只看一行摘要（否则 LLM 无内容可引用，差距分析和建议都会空泛）。
+    case_lines = []
+    for c in retrieval.cases:
+        case_lines.append(
+            f"- [{c.role_category}] {c.role_name} @{c.company} 相似度{c.score} source={c.source}\n"
+            f"  案例原文：\n{c.content}"
+        )
     jd_lines = [
         f"- [{jd.role_category}] {jd.role_name} @{jd.company} 相似度{jd.score} source={jd.source}"
         for jd in retrieval.jds
