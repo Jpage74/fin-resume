@@ -4,6 +4,9 @@ data/profile.yaml
 data/history.db
 data/knowledge/
 data/memory/
+data/resume_latest.txt
+data/last_analysis.json
+data/resume_draft.txt
 
 # Chroma 向量库（可由 seed 脚本重建，不入库）
 data/chroma/
