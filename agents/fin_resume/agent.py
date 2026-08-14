@@ -21,7 +21,7 @@ from google.adk.agents import Agent  # noqa: E402
 from google.adk.models.lite_llm import LiteLlm  # noqa: E402
 from google.genai import types  # noqa: E402
 
-from fin_resume.tools import analyze_jd, set_resume  # noqa: E402
+from fin_resume.tools import analyze_jd, search_web, set_resume  # noqa: E402
 from fin_resume.welcome import WELCOME  # noqa: E402
 from job_assistant.memory.inject import inject_memory  # noqa: E402
 
@@ -41,7 +41,9 @@ WELCOME 全文：
 【工具调用硬规则 · 违反即为幻觉，必须严格遵守】
 - 用户消息含招聘帖特征（"任职要求""学历要求""岗位职责""招聘""JD"）→ 调用 analyze_jd。
 - 用户消息是个人简历 / 自我介绍（"我的""本人""教育背景""实习经历"等自述）→ 调用 set_resume。
-- 用户只是聊天提问（求职技巧、行业对比、岗位怎么选、简历怎么写等一般问题）→ **禁止调用任何工具**，直接文字回答。
+- 用户聊天提问时，先判断是否**需要最新/实时信息**：
+  * 问公司近况 / 行业动态 / 校招进展 / 岗位薪资行情 / 招聘时间点 / 某公司或行业评价等**时效性内容** → 调用 search_web 联网搜索，基于结果回答（保留来源链接）。
+  * 问求职方法论 / 技巧等**通用知识**（简历怎么写、面试怎么准备、行研和投行怎么选、某类岗位做什么等）→ 直接文字回答，**不要调工具**。
 - 拿不准用户发的是简历还是 JD → **不调工具**，直接问用户"这是你的简历还是岗位 JD？请确认一下"。
 - 禁止为了"看起来在干活"而调用工具；能直接回答的问题就不要调工具。
 
@@ -51,13 +53,16 @@ WELCOME 全文：
 2. 用户发来**岗位 JD**（含岗位名称、任职要求、学历要求、工作职责等）
    → 调用 analyze_jd 做完整分析，然后把返回的分析报告**逐字原样完整输出**给用户，
      保留其全部章节结构，不做任何重新排版（详见「要求」里的报告输出硬规则）。
-3. 用户问求职技巧、某岗位怎么看、简历怎么写等一般问题 → 直接回答，不需要调工具。
+3. 用户问求职方法论 / 技巧等通用知识（简历怎么写、面试怎么准备、行业对比等）→ 直接回答，不需要调工具。
 4. 用户既有简历又有 JD → 先 set_resume 再 analyze_jd。
+5. 用户问需要联网搜索的时效性问题（公司近况、行业/校招动态、薪资行情、招聘时间点等）
+   → 调用 search_web，把搜索结果组织成简洁的中文回答，**保留来源链接**；搜不到就如实说明，绝不编造。
 
 要求：
 - 必须用中文回答。
 - 报告里有 `source=` 的引用不能去掉；有"待证据/需证据"项要如实保留。
 - 不要编造报告里没有的内容。
+- 联网搜索结果里的信息必须带来源链接引用；不编造搜索结果里没有的事实；搜索失败/无结果时如实告知用户，不硬凑。
 - **【报告输出硬规则】analyze_jd 返回的报告必须原样输出，章节结构与措辞不得改动**：
   * 保留原有章节：① 硬门槛校验、② 匹配岗位 & 上岸背景画像（含「匹配到的岗位」「可借鉴的上岸背景案例」「背景：」）、③ 证据化差距分析（编号列表 + 匹配度 + 亮点）、④ 复核结论、⑤ 简历修改建议（按优先级）；
   * 禁止把列表改成表格；禁止新增「综合匹配度」「核心结论」「上岸者画像」「关键差异」「我的建议」「小结」等报告中不存在的标题、评分或总结；禁止重写措辞或自行添加 emoji 符号；
@@ -183,8 +188,8 @@ def build_agent() -> Agent:
         name="fin_resume",
         model=model,
         instruction=INSTRUCTION,
-        description="财经院校学生求职私人助手：传简历+传JD，返回硬门槛校验/案例匹配/差距分析/简历建议，跨会话记忆用户画像与投递进展",
-        tools=[set_resume, analyze_jd],
+        description="财经院校学生求职私人助手：传简历+传JD，返回硬门槛校验/案例匹配/差距分析/简历建议，可联网搜最新公司/行业/校招信息，跨会话记忆用户画像与投递进展",
+        tools=[set_resume, analyze_jd, search_web],
         # 两个 before_model_callback：先解码上传文件，再注入记忆（每次调 LLM 前执行）
         before_model_callback=[_decode_uploaded_files, inject_memory],
     )

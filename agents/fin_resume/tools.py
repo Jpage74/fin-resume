@@ -13,6 +13,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 from job_assistant.pipeline import run_pipeline  # noqa: E402
 from job_assistant.report import format_report  # noqa: E402
 from job_assistant.resume.parser import profile_has_data, save_resume  # noqa: E402
+from job_assistant.search.web_search import web_search  # noqa: E402
 
 
 def set_resume(resume_text: str) -> str:
@@ -64,3 +65,16 @@ def analyze_jd(jd_text: str) -> str:
     if not result.review_result.approved:
         report += "\n\n> ⚠ 复核未通过，输出仅供参考，请按修正建议核对。"
     return report
+
+
+def search_web(query: str) -> str:
+    """联网搜索最新信息（Tavily）。
+
+    调用条件：仅在用户问「需要最新/实时信息」的时效性问题时调用——公司近况、
+    行业动态、校招进展、岗位薪资行情、某公司/行业评价、招聘季时间点等。
+    不要调用：纯求职方法论/技巧（简历怎么写、面试怎么准备、行研和投行怎么选、
+    某类岗位做什么等通用知识）→ 直接用内置知识回答，不必搜索。
+    输入：搜索查询词（中文，简洁）。
+    返回：带来源链接的搜索结果摘要，供组织回答。
+    """
+    return web_search(query)
