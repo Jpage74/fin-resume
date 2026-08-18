@@ -1,5 +1,6 @@
 # 隐私与密钥
 .env
+docs/
 data/profile.yaml
 data/history.db
 data/knowledge/
