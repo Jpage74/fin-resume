@@ -13,6 +13,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 from job_assistant.pipeline import run_pipeline  # noqa: E402
 from job_assistant.report import format_report  # noqa: E402
 from job_assistant.resume.parser import profile_has_data, save_resume  # noqa: E402
+from job_assistant.revision.apply_revision import apply_revision as _apply_revision  # noqa: E402
+from job_assistant.revision.apply_revision import save_last_analysis  # noqa: E402
 from job_assistant.search.web_search import web_search  # noqa: E402
 
 
@@ -56,6 +58,12 @@ def analyze_jd(jd_text: str) -> str:
     except Exception as e:
         return f"⚠ 分析失败：{type(e).__name__}: {e}。可能是模型调用或知识库问题，请稍后重试。"
 
+    # 落盘本次分析的结构化建议，供一键改简历（apply_revision）读取
+    try:
+        save_last_analysis(result)
+    except Exception:
+        pass
+
     report = format_report(result)
 
     if not profile_has_data(result.profile):
@@ -78,3 +86,14 @@ def search_web(query: str) -> str:
     返回：带来源链接的搜索结果摘要，供组织回答。
     """
     return web_search(query)
+
+
+def apply_revision(instructions: str = "") -> str:
+    """一键修改简历：基于最近一次 JD 分析的修改建议改写简历并写回画像。
+
+    调用条件：仅在用户明确要求「按分析建议修改 / 优化简历」时调用（如"帮我改简历""按建议优化""把简历改一下"）。
+    不要调用：用户只是问简历怎么写、或还没分析过岗位 JD 时（工具会返回提示，照实转达即可）。
+    instructions：可选，用户对修改的额外要求（如"重点改实习经历那段""整体简洁一点"）；无则空串，默认应用全部建议。
+    返回：逐条改动 diff + 修改后简历全文，需原样转述给用户。
+    """
+    return _apply_revision(instructions)

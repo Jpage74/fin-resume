@@ -14,6 +14,7 @@ from dotenv import load_dotenv  # noqa: E402
 
 from job_assistant.llm import DEFAULT_MODEL, complete_json  # noqa: E402
 from job_assistant.memory.profile import load_profile, save_profile  # noqa: E402
+from job_assistant.paths import RESUME_LATEST_PATH  # noqa: E402
 
 load_dotenv()
 
@@ -54,15 +55,21 @@ def parse_resume(resume_text: str, model: str = DEFAULT_MODEL) -> dict:
     return data
 
 
-def save_resume(resume_text: str, path: Path | None = None) -> dict:
+def save_resume(resume_text: str, path: Path | None = None, resume_path: Path | None = None) -> dict:
     """解析简历并合并保存到 profile.yaml，返回更新后的完整画像。
 
     合并策略（MVP 极简）：user 里新字段非空则覆盖，空则不覆盖已有内容。
+    resume_path：简历原文落盘路径（一键改简历读取/写回用），默认 data/resume_latest.txt。
     """
     user = parse_resume(resume_text)
     profile = load_profile(path) if path else load_profile()
     profile["user"].update({k: v for k, v in user.items() if v not in (None, "", [])})
     save_profile(profile, path) if path else save_profile(profile)
+    # 持久化简历原文（本地 gitignore，一键改简历读取/写回用）
+    try:
+        (resume_path or RESUME_LATEST_PATH).write_text(resume_text.strip(), encoding="utf-8")
+    except Exception:
+        pass
     return profile
 
 

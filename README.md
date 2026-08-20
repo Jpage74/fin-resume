@@ -65,6 +65,8 @@ web 智能体 `fin_resume` 在每次**新建会话**时主动输出开场白（�
 
 ```
 src/job_assistant/      # 四环管线：jd_analyzer / case_retriever / resume_matcher / reviewer
+src/job_assistant/revision/  # 一键修改简历：apply_revision（生成 diff + 备份 + 写回画像）
+src/job_assistant/search/  # 联网搜索：web_search（Tavily，结果带 source）
 src/job_assistant/memory/  # 记忆层：profile / history / stm(短期) / ltm(长期摘要) / inject(注入)
 agents/fin_resume/      # ADK web 智能体（agent.py 主逻辑 + tools.py 工具 + welcome.py 开场白）
 scripts/                # 冒烟测试 / 评测脚本 / run_memory_digest.py（每日摘要）
@@ -80,6 +82,8 @@ data/                   # 画像 / 向量库 / 知识库 / 记忆（本地存储
 - [x] 防幻觉：证据绑定 + needs_proof + reviewer 复核 + RAG 评测（recall@k）
 - [x] 种子数据：背景画像案例库（真实 bg 帖整理，当前券商行研/券商投行 3 案例 + 1 JD，持续扩充中）
 - [x] 记忆层：用户画像 + 投递历史 + STM 短期记忆（20 分钟对话）+ LTM 长期记忆（每日摘要三 MD，`scripts/run_memory_digest.py`）
+- [x] 联网搜索：Tavily `search_web` 工具（时效性问题实时查询，结果带 source）
+- [x] 一键修改简历：`apply_revision` 工具（基于最近一次分析建议改写简历 + 旧版备份可回滚）
 - [ ] 定时收集：GitHub Actions cron
 
 ## 隐私
