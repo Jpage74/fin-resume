@@ -11,12 +11,16 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 
 from job_assistant.analyzer.role_profiler import profile_role  # noqa: E402
+from job_assistant.memory.history import add_feedback  # noqa: E402
 from job_assistant.pipeline import run_pipeline, run_pipeline_reqs  # noqa: E402
 from job_assistant.report import format_report  # noqa: E402
 from job_assistant.resume.parser import profile_has_data, save_resume  # noqa: E402
 from job_assistant.revision.apply_revision import apply_revision as _apply_revision  # noqa: E402
-from job_assistant.revision.apply_revision import save_last_analysis  # noqa: E402
+from job_assistant.revision.apply_revision import load_last_analysis, save_last_analysis  # noqa: E402
 from job_assistant.search.web_search import web_search  # noqa: E402
+
+# 报告尾部反馈提示（反馈回路入口，随报告一并返回）
+_FEEDBACK_HINT = "\n\n---\n这份分析对你有帮助吗？回复「有用」或「不准 + 原因」，我会记录下来持续改进。"
 
 
 def set_resume(resume_text: str) -> str:
@@ -69,11 +73,11 @@ def analyze_jd(jd_text: str) -> str:
 
     if not profile_has_data(result.profile):
         head = "⚠ **提示：你的画像还是空的**，下面的结果全部按「待证据」处理，仅供参考。先把简历发给我，分析会更准。\n\n"
-        return head + report
+        return head + report + _FEEDBACK_HINT
 
     if not result.review_result.approved:
         report += "\n\n> ⚠ 复核未通过，输出仅供参考，请按修正建议核对。"
-    return report
+    return report + _FEEDBACK_HINT
 
 
 def analyze_role(role_name: str) -> str:
@@ -107,10 +111,47 @@ def analyze_role(role_name: str) -> str:
     report = format_report(result)
     if not profile_has_data(result.profile):
         head = "⚠ **提示：你的画像还是空的**，下面的结果全部按「待证据」处理，仅供参考。先把简历发给我，分析会更准。\n\n"
-        return note + head + report
+        return note + head + report + _FEEDBACK_HINT
     if not result.review_result.approved:
         report += "\n\n> ⚠ 复核未通过，输出仅供参考，请按修正建议核对。"
-    return note + report
+    return note + report + _FEEDBACK_HINT
+
+
+def record_feedback(rating: str, comment: str = "") -> str:
+    """记录用户对最近一次分析报告的反馈（反馈回路）。
+
+    调用条件：用户对刚才的分析表达评价时（"有用""有帮助""不准""这不对"等）。
+    不要调用：本次会话还没做过任何分析（analyze_jd / analyze_role）时。
+    rating：只能是「有用」或「不准」二选一，按用户意图传入。
+    comment：可选，用户的补充说明原样传入（如不准的原因）。
+    返回：记录确认信息。
+    """
+    rating = (rating or "").strip()
+    if rating not in ("有用", "不准"):
+        return "⚠ rating 只能是「有用」或「不准」。请先确认用户想表达的评价再调用。"
+
+    analysis = load_last_analysis() or {}
+    try:
+        add_feedback(
+            rating=rating,
+            comment=(comment or "").strip(),
+            role_category=analysis.get("role_category", ""),
+            company=analysis.get("company") or "",
+            role_name=analysis.get("role_name", ""),
+            match_score=analysis.get("match_score"),
+            verdict=analysis.get("verdict", ""),
+        )
+    except Exception as e:  # noqa: BLE001
+        return f"⚠ 反馈保存失败：{type(e).__name__}: {e}。请稍后重试。"
+
+    role = analysis.get("role_name") or "未知岗位"
+    extra = f"\n- 补充说明：{comment.strip()}" if (comment or "").strip() else ""
+    return (
+        f"✅ 反馈已记录\n"
+        f"- 评价：{rating}\n"
+        f"- 关联分析：{role}{extra}\n"
+        f"谢谢！这些反馈会用于持续改进分析质量。"
+    )
 
 
 def search_web(query: str) -> str:

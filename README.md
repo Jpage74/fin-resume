@@ -85,6 +85,7 @@ data/                   # 画像 / 向量库 / 知识库 / 记忆（本地存储
 - [x] 联网搜索：Tavily `search_web` 工具（时效性问题实时查询，结果带 source）
 - [x] 岗位画像分析：`analyze_role` 工具（只给岗位名也能分析，内置画像 + 知识库 + 联网聚合典型要求）
 - [x] 一键修改简历：`apply_revision` 工具（基于最近一次分析建议改写简历 + 旧版备份可回滚）
+- [x] 反馈回路：`record_feedback` 工具（对分析标「有用/不准」落库 history.db，驱动 prompt 迭代）
 - [ ] 定时收集：GitHub Actions cron
 
 ## 隐私
