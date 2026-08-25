@@ -21,7 +21,7 @@ from google.adk.agents import Agent  # noqa: E402
 from google.adk.models.lite_llm import LiteLlm  # noqa: E402
 from google.genai import types  # noqa: E402
 
-from fin_resume.tools import analyze_jd, apply_revision, search_web, set_resume  # noqa: E402
+from fin_resume.tools import analyze_jd, analyze_role, apply_revision, search_web, set_resume  # noqa: E402
 from fin_resume.welcome import WELCOME  # noqa: E402
 from job_assistant.memory.inject import inject_memory  # noqa: E402
 
@@ -45,6 +45,7 @@ WELCOME 全文：
   * 问公司近况 / 行业动态 / 校招进展 / 岗位薪资行情 / 招聘时间点 / 某公司或行业评价等**时效性内容** → 调用 search_web 联网搜索，基于结果回答（保留来源链接）。
   * 问求职方法论 / 技巧等**通用知识**（简历怎么写、面试怎么准备、行研和投行怎么选、某类岗位做什么等）→ 直接文字回答，**不要调工具**。
 - 用户要求「按分析建议修改简历」（"帮我改简历""按建议优化""把简历改一下"等）→ 调用 apply_revision（可选传 instructions 说明额外要求）。
+- 用户只提岗位/方向名、没给完整 JD（"我想看行研岗""四大审计要什么条件""银行管培怎么样"等）→ 调用 analyze_role；给了完整 JD（含任职要求/岗位职责）→ 用 analyze_jd。
 - 拿不准用户发的是简历还是 JD → **不调工具**，直接问用户"这是你的简历还是岗位 JD？请确认一下"。
 - 禁止为了"看起来在干活"而调用工具；能直接回答的问题就不要调工具。
 
@@ -61,6 +62,8 @@ WELCOME 全文：
 6. 用户要求「按分析建议修改简历」（"帮我改简历""按建议优化"等）
    → 调用 apply_revision（可传 instructions 说明额外要求，如"重点改实习那段"）；
       把返回的改动 diff 与修改后简历全文逐字原样输出给用户。
+7. 用户只提岗位/方向、没给完整 JD（如"我想看券商行研岗""四大审计要什么条件"）
+   → 调用 analyze_role 做基于岗位画像的分析，返回报告逐字原样输出。
 
 要求：
 - 必须用中文回答。
@@ -192,8 +195,8 @@ def build_agent() -> Agent:
         name="fin_resume",
         model=model,
         instruction=INSTRUCTION,
-        description="财经院校学生求职私人助手：传简历+传JD，返回硬门槛校验/案例匹配/差距分析/简历建议，可一键按建议改简历，可联网搜最新公司/行业/校招信息，跨会话记忆用户画像与投递进展",
-        tools=[set_resume, analyze_jd, search_web, apply_revision],
+        description="财经院校学生求职私人助手：传简历+传JD（或只给岗位名），返回硬门槛校验/案例匹配/差距分析/简历建议，可一键按建议改简历，可联网搜最新公司/行业/校招信息，跨会话记忆用户画像与投递进展",
+        tools=[set_resume, analyze_jd, analyze_role, search_web, apply_revision],
         # 两个 before_model_callback：先解码上传文件，再注入记忆（每次调 LLM 前执行）
         before_model_callback=[_decode_uploaded_files, inject_memory],
     )

@@ -10,7 +10,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 
-from job_assistant.pipeline import run_pipeline  # noqa: E402
+from job_assistant.analyzer.role_profiler import profile_role  # noqa: E402
+from job_assistant.pipeline import run_pipeline, run_pipeline_reqs  # noqa: E402
 from job_assistant.report import format_report  # noqa: E402
 from job_assistant.resume.parser import profile_has_data, save_resume  # noqa: E402
 from job_assistant.revision.apply_revision import apply_revision as _apply_revision  # noqa: E402
@@ -73,6 +74,43 @@ def analyze_jd(jd_text: str) -> str:
     if not result.review_result.approved:
         report += "\n\n> ⚠ 复核未通过，输出仅供参考，请按修正建议核对。"
     return report
+
+
+def analyze_role(role_name: str) -> str:
+    """只给岗位名（如"券商行研""银行管培生"）也能做完整分析（无需 JD 原文）。
+
+    调用条件：用户只提到岗位/方向名称、没有给具体 JD 时（如"我想看行研岗的要求""四大审计要什么条件"）。
+    不要调用：用户已粘贴完整 JD（含任职要求/岗位职责）→ 用 analyze_jd。
+    输入：岗位名或方向（如"券商行研""银行管培""四大审计""PE股权投资""国企财务"）。
+    返回：完整分析报告（硬门槛校验 / 匹配岗位&案例 / 差距分析 / 复核结论 / 修改建议）。
+    """
+    try:
+        reqs = profile_role(role_name)
+    except Exception as e:
+        return (
+            f"⚠ 岗位识别失败：{type(e).__name__}: {e}。"
+            "请把岗位名写具体些（如「券商行研」「银行管培」「四大审计」），或直接粘贴完整 JD。"
+        )
+
+    try:
+        result = run_pipeline_reqs(reqs)
+    except Exception as e:
+        return f"⚠ 分析失败：{type(e).__name__}: {e}。可能是模型调用或知识库问题，请稍后重试。"
+
+    # 落盘本次分析的结构化建议，供一键改简历（apply_revision）读取
+    try:
+        save_last_analysis(result)
+    except Exception:
+        pass
+
+    note = "🧭 未给具体 JD，已按岗位画像聚合典型要求（内置画像 + 知识库同类 JD + 联网搜索），仅供参考。\n\n"
+    report = format_report(result)
+    if not profile_has_data(result.profile):
+        head = "⚠ **提示：你的画像还是空的**，下面的结果全部按「待证据」处理，仅供参考。先把简历发给我，分析会更准。\n\n"
+        return note + head + report
+    if not result.review_result.approved:
+        report += "\n\n> ⚠ 复核未通过，输出仅供参考，请按修正建议核对。"
+    return note + report
 
 
 def search_web(query: str) -> str:

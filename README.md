@@ -80,9 +80,10 @@ data/                   # 画像 / 向量库 / 知识库 / 记忆（本地存储
 - [x] MVP：JD 解析 + 差异分析 + RAG 案例检索
 - [x] web 可视化：ADK dev-ui 交互式智能体 + 文件上传 + 开场白
 - [x] 防幻觉：证据绑定 + needs_proof + reviewer 复核 + RAG 评测（recall@k）
-- [x] 种子数据：背景画像案例库（真实 bg 帖整理，当前券商行研/券商投行 3 案例 + 1 JD，持续扩充中）
+- [x] 种子数据：背景画像案例库（真实 bg 帖整理，16 条 JD + 23 条上岸者背景画像，覆盖 12 类岗位）
 - [x] 记忆层：用户画像 + 投递历史 + STM 短期记忆（20 分钟对话）+ LTM 长期记忆（每日摘要三 MD，`scripts/run_memory_digest.py`）
 - [x] 联网搜索：Tavily `search_web` 工具（时效性问题实时查询，结果带 source）
+- [x] 岗位画像分析：`analyze_role` 工具（只给岗位名也能分析，内置画像 + 知识库 + 联网聚合典型要求）
 - [x] 一键修改简历：`apply_revision` 工具（基于最近一次分析建议改写简历 + 旧版备份可回滚）
 - [ ] 定时收集：GitHub Actions cron
 

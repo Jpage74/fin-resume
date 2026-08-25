@@ -39,24 +39,18 @@ class PipelineResult:
     profile: dict = field(default_factory=dict)
 
 
-def run_pipeline(
-    jd_text: str,
-    source: str = "",
+def run_pipeline_reqs(
+    reqs: JobRequirements,
+    profile: dict | None = None,
     seed_index: bool = False,
-    profile_path: Path | None = None,
 ) -> PipelineResult:
-    """跑完整四环管线。
+    """给定已解析的 JobRequirements，跑后续管线（硬门槛 + 检索 + 差距分析 + 复核）。
 
-    Args:
-        jd_text: 岗位 JD 原文。
-        source: JD 来源标识（渠道+编号），用于溯源与历史去重。
-        seed_index: True 则先全量重建向量索引（知识库变更后需开）。
-        profile_path: 用户画像路径，默认 data/profile.yaml。
+    供 role_profiler（只给岗位名）复用：跳过 JD 解析，直接进入后续三环。
     """
-    profile = load_profile(profile_path) if profile_path else load_profile()
+    if profile is None:
+        profile = load_profile()
 
-    # ① 解析
-    reqs = analyze_jd(jd_text, source=source)
     # ② 硬门槛 + 检索
     retriever = CaseRetriever()
     if seed_index:
@@ -81,6 +75,26 @@ def run_pipeline(
         reqs=reqs, gates=gates, retrieval=retrieval,
         report=report, review_result=review_result, profile=profile,
     )
+
+
+def run_pipeline(
+    jd_text: str,
+    source: str = "",
+    seed_index: bool = False,
+    profile_path: Path | None = None,
+) -> PipelineResult:
+    """跑完整四环管线。
+
+    Args:
+        jd_text: 岗位 JD 原文。
+        source: JD 来源标识（渠道+编号），用于溯源与历史去重。
+        seed_index: True 则先全量重建向量索引（知识库变更后需开）。
+        profile_path: 用户画像路径，默认 data/profile.yaml。
+    """
+    profile = load_profile(profile_path) if profile_path else load_profile()
+    # ① 解析
+    reqs = analyze_jd(jd_text, source=source)
+    return run_pipeline_reqs(reqs, profile=profile, seed_index=seed_index)
 
 
 def needs_proof_items(report: MatchReport) -> list[str]:
